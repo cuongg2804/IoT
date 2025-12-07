@@ -2,20 +2,38 @@ import express, { Request, Response } from "express";
 import dotenv from "dotenv";
 import router from "./router/index.router";
 import * as database from "./config/database";
+import { initMqtt } from "./config/mqtt";
+import { Server } from "socket.io";
+import http from "http";
 
 dotenv.config();
 
 const app = express();
 
+// Tạo HTTP server để gắn Socket.IO vào
+const server = http.createServer(app);
+
+// Khởi tạo socket.io
+const io = new Server(server);
+
+// Kết nối database
 database.connect();
-app.use(router)
+
+// Router
+app.use(router);
+
+// View engine
 app.set("view engine", "html");
 app.engine("html", require("ejs").renderFile);
 app.set("views", `${__dirname}/view`);
+
+// Static folder
 app.use(express.static(`${__dirname}/public/`));
 
+// Khởi động MQTT và truyền io vào
+initMqtt(io);
 
-
-app.listen(3000, () => {
+// ---- CHỈ DÙNG server.listen ----
+server.listen(3000, () => {
   console.log("Connected to port 3000");
 });
