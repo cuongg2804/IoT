@@ -1,80 +1,42 @@
-// // MQTT HiveMQ Cloud
-// const client = mqtt.connect("wss://d3b620a77b6b4436a805011e8d7aaaf0.s1.eu.hivemq.cloud:8884/mqtt", {
-//   username: "admin",
-//   password: "Admin@123"
-// });
-
-// // Topics
-// const topicCmd       = "esp/control";
-// const topicStatus  = "esp/status";
-// const topicArduino   = "esp/arduino/data";
-
-// // DOM elements
-// const statusEl = document.getElementById("systemStatus");
-// const feedbackEl = document.getElementById("feedbackList");
-
-// // Color counters
-// let countXanh = 0, countDo = 0, countVang = 0;
-
-// // Connect & subscribe
-// client.on('connect', () => {
-//   console.log("Connected to MQTT");
-//   statusEl.textContent = "Đã kết nối broker";
-//   client.subscribe(topicArduino);
-//   client.subscribe(topicStatus);
-// });
-
-// // Handle incoming messages
-// client.on('message', (topic, message) => {
-//   const msg = message.toString();
-
-//   if(topic === topicStatus){
-//     statusEl.textContent = msg;
-//   } 
-//   else if(topic === topicArduino){
-//     try{
-//       const data = JSON.parse(msg);
-//       console.log(data)
-//       if(data.col){
-//         if(data.col === "Xanh") countXanh++;
-//         else if(data.col === "Do") countDo++;
-//         else if(data.col === "Vang") countVang++;
-
-//         document.getElementById("countXanh").textContent = `Xanh: ${countXanh}`;
-//         document.getElementById("countDo").textContent = `Đỏ: ${countDo}`;
-//         document.getElementById("countVang").textContent = `Vàng: ${countVang}`;
-//       }
-//     } catch(e){
-//     console.log(e)
-//     }
-//   }
-  
-// });
-
-// // Send command
-// function sendCmd(cmd){
-//   client.publish(topicCmd, cmd);
-// }
-
 const socket = io("http://localhost:3000");
 const statusEl = document.getElementById("systemStatus");
 
+// Biến trạng thái hệ thống
+let systemOn = false;
+
+// Biến đếm
+let countXanh = 0, countDo = 0, countVang = 0;
+
+// Nhận trạng thái MQTT
 socket.on("mqtt_status", (data) => {
   console.log("MQTT STATUS:", data);
- 
-  // ví dụ hiển thị UI
-
   statusEl.innerText = `MQTT: ${data.status}`;
 });
 
-let countXanh = 0, countDo = 0, countVang = 0;
+// Nhận dữ liệu Arduino
 socket.on("mqtt_message", (data) => {
-  console.log(data)
+  // Trạng thái hệ thống
   if (data.topic === "esp/status") {
     statusEl.textContent = data.msg;
-  }
 
-  else if (data.topic === "esp/arduino/data") {
+    // Cập nhật biến systemOn dựa vào trạng thái
+    if (data.msg === "ON") {
+      systemOn = true;
+    } else if (data.msg === "OFF" || data.msg === "STOP") {
+      systemOn = false;
+
+      // Reset dữ liệu khi tắt/dừng
+      countXanh = 0;
+      countDo = 0;
+      countVang = 0;
+
+      document.getElementById("countXanh").textContent = `Xanh: 0`;
+      document.getElementById("countDo").textContent = `Đỏ: 0`;
+      document.getElementById("countVang").textContent = `Vàng: 0`;
+    }
+  }
+  // Dữ liệu Arduino
+  else if (data.topic === "esp/arduino/data" && systemOn) {
     try {
       const dataCount = JSON.parse(data.msg);  // msg phải là JSON string
       console.log(dataCount);
@@ -84,19 +46,34 @@ socket.on("mqtt_message", (data) => {
         else if (dataCount.col === "Do") countDo++;
         else if (dataCount.col === "Vang") countVang++;
 
-        document.getElementById("countXanh").textContent = `Xanh: ${countXanh}`;
-        document.getElementById("countDo").textContent = `Đỏ: ${countDo}`;
-        document.getElementById("countVang").textContent = `Vàng: ${countVang}`;
+        updateCount();
+        
       }
     } catch (err) {
-      console.error("JSON parse error:", err, msg);
+      console.error("JSON parse error:", err);
     }
   }
 });
 
-function sendCmd(cmd) {
-  console.log(cmd)
-  socket.emit("send_cmd", cmd);
+function updateCount () {
+  document.getElementById("countXanh").textContent = `Xanh: ${countXanh}`;
+  document.getElementById("countDo").textContent = `Đỏ: ${countDo}`;
+  document.getElementById("countVang").textContent = `Vàng: ${countVang}`;
 }
 
+// Gửi lệnh từ FE
+function sendCmd(cmd) {
+  console.log(cmd);
+  socket.emit("send_cmd", cmd);
 
+  if(cmd == "ON") {
+    systemOn = true;
+  }
+
+  if(cmd == "OFF" || cmd == "STOP"){
+    systemOn = false;
+    countXanh = countDo = countVang = 0;
+    updateCount();
+    window.location.reload();
+  }
+}

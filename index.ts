@@ -23,7 +23,7 @@ database.connect();
 app.use(router);
 
 // View engine
-app.set("view engine", "html");
+app.set("view engine", "pug");
 app.engine("html", require("ejs").renderFile);
 app.set("views", `${__dirname}/view`);
 

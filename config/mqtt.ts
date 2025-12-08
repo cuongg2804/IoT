@@ -1,7 +1,7 @@
 // src/services/mqttService.ts
 import mqtt, { MqttClient } from "mqtt";
 import { Server } from "socket.io";
-
+import { startSession, stopSession, processData } from "../service/session.service";
 let client: MqttClient;
 
 export const initMqtt = (io: Server) => {
@@ -24,6 +24,10 @@ export const initMqtt = (io: Server) => {
   // Nhận message → gửi sang FE qua Socket.io
   client.on("message", (topic: string, message: Buffer) => {
     const msg = message.toString();
+
+     if (topic === "esp/arduino/data") {
+        processData(JSON.parse(msg));
+      }
     
     io.emit("mqtt_message", { topic, msg });
   });
@@ -44,6 +48,13 @@ export const initMqtt = (io: Server) => {
     socket.on("send_cmd", (cmd: string) => {
       console.log("CMD from FE:", cmd);
       publishCommand(cmd);
+
+      if(cmd == "ON") {
+        startSession()
+      }
+      if(cmd == "OFF" || cmd == "STOP") {
+        stopSession()
+      }
     });
   });
 };

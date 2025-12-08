@@ -1,0 +1,61 @@
+doctype html
+html(lang="en")
+  head
+    meta(charset="UTF-8")
+    title ESP System Control
+    link(rel="stylesheet", href="/style.css")
+  body
+    h1 ESP System Control
+
+    // Controls
+    .controls
+      button(onclick="sendCmd('ON')") Bật
+      button(onclick="sendCmd('OFF')") Tắt
+      button(onclick="sendCmd('STOP')") Dừng khẩn cấp
+
+    // System status
+    .status
+      p Trạng thái: 
+        span#systemStatus Chưa kết nối...
+      .colorCounters
+        span#countXanh.badge.xanh Xanh: 0
+        span#countDo.badge.do Đỏ: 0
+        span#countVang.badge.vang Vàng: 0
+
+    // Session table
+    h2 Thống kê
+    table#sessionTable.session-table
+      thead
+        tr
+          th #
+          th Bắt đầu
+          th Kết thúc
+          th Thời gian
+          th Xanh
+          th Đỏ
+          th Vàng
+          th Tổng
+          th
+      tbody
+        each session, index in sessionList
+          - const start = new Date(session.startAt)
+          - const end = new Date(session.endAt)
+          - const durationSec = Math.floor((end - start) / 1000)
+          - const durationStr = `${Math.floor(durationSec / 60)}m ${durationSec % 60}s`
+          - const total = session.totalBlue + session.totalRed + session.totalGreen
+          tr
+            td #{index + 1}
+            td #{start.toLocaleString()}
+            td #{end.toLocaleString()}
+            td #{durationStr}
+            td #{session.totalBlue}
+            td #{session.totalRed}
+            td #{session.totalGreen}
+            td #{total}
+            td
+              button.view-btn(onclick=`viewSession('${session._id}')`) 🔍
+
+    // Scripts
+    script(src="/socket.io/socket.io.js")
+    script(src="https://unpkg.com/mqtt/dist/mqtt.min.js")
+    script(src="/script.js")
