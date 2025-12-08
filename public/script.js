@@ -56,7 +56,6 @@
 //   client.publish(topicCmd, cmd);
 // }
 
-
 const socket = io("http://localhost:3000");
 const statusEl = document.getElementById("systemStatus");
 
@@ -68,20 +67,22 @@ socket.on("mqtt_status", (data) => {
   statusEl.innerText = `MQTT: ${data.status}`;
 });
 
-socket.on("mqtt_message", (topic, msg) => {
-  if (topic === "esp/status") {
-    statusEl.textContent = msg;
+let countXanh = 0, countDo = 0, countVang = 0;
+socket.on("mqtt_message", (data) => {
+  console.log(data)
+  if (data.topic === "esp/status") {
+    statusEl.textContent = data.msg;
   }
 
-  else if (topic === "esp/arduino/data") {
+  else if (data.topic === "esp/arduino/data") {
     try {
-      const data = JSON.parse(msg);  // msg phải là JSON string
-      console.log(data);
+      const dataCount = JSON.parse(data.msg);  // msg phải là JSON string
+      console.log(dataCount);
 
-      if (data.col) {
-        if (data.col === "Xanh") countXanh++;
-        else if (data.col === "Do") countDo++;
-        else if (data.col === "Vang") countVang++;
+      if (dataCount.col) {
+        if (dataCount.col === "Xanh") countXanh++;
+        else if (dataCount.col === "Do") countDo++;
+        else if (dataCount.col === "Vang") countVang++;
 
         document.getElementById("countXanh").textContent = `Xanh: ${countXanh}`;
         document.getElementById("countDo").textContent = `Đỏ: ${countDo}`;
@@ -92,4 +93,10 @@ socket.on("mqtt_message", (topic, msg) => {
     }
   }
 });
+
+function sendCmd(cmd) {
+  console.log(cmd)
+  socket.emit("send_cmd", cmd);
+}
+
 
