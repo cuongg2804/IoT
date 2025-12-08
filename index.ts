@@ -34,8 +34,6 @@ app.use(express.static(`${__dirname}/public/`));
 initMqtt(io);
 
 io.on("connection", (socket) => {
-  // console.log("Socket connected:", socket.id);
-
   const client = getClient();
 
   socket.emit("mqtt_status", {

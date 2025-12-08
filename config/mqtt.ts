@@ -37,7 +37,7 @@ export const initMqtt = (io: Server) => {
   });
 
   client.on("reconnect", () => {
-    console.log("MQTT Reconnecting...");
+    console.log("MQTT Reconnecting..");
   });
 
   io.on("connection", (socket) => {
