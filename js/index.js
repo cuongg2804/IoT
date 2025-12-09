@@ -51,14 +51,13 @@ const server = http_1.default.createServer(app);
 const io = new socket_io_1.Server(server);
 // Kết nối database
 database.connect();
-// Router
-app.use(index_router_1.default);
 // View engine
 app.set("view engine", "pug");
-app.engine("html", require("ejs").renderFile);
 app.set("views", `${__dirname}/view`);
 // Static folder
 app.use(express_1.default.static(`${__dirname}/public/`));
+// Router
+app.use(index_router_1.default);
 // Khởi động MQTT và truyền io vào
 (0, mqtt_1.initMqtt)(io);
 io.on("connection", (socket) => {

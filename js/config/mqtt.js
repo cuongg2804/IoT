@@ -31,15 +31,6 @@ const initMqtt = (io) => {
         }
         io.emit("mqtt_message", { topic, msg });
     });
-    client.on("error", (err) => {
-        console.error("MQTT Error:", err);
-    });
-    client.on("offline", () => {
-        console.warn("MQTT Offline");
-    });
-    client.on("reconnect", () => {
-        console.log("MQTT Reconnecting..");
-    });
     io.on("connection", (socket) => {
         socket.on("send_cmd", (cmd) => {
             console.log("CMD from FE:", cmd);
