@@ -1,4 +1,4 @@
-const socket = io("http://localhost:3000");
+const socket = io("https://iot-pj20.onrender.com");
 const statusEl = document.getElementById("systemStatus");
 
 // Biến trạng thái hệ thống
